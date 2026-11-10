@@ -1,81 +1,141 @@
-// Semáforo com botão de pedestre
+// Semáforo inteligente (cruzamento com 2 ruas)
 // Autor: Gabriel Alasca
 // Placa: Arduino Uno
+//
+// Ideia: o verde vai para a rua que tem carro esperando.
+// Se a outra rua está vazia, o semáforo não fecha para quem está passando.
 
-// pinos
-const int LED_VERDE    = 8;
-const int LED_AMARELO  = 9;
-const int LED_VERMELHO = 10;
-const int BOTAO        = 2;   // ligado ao GND (usa resistor interno)
-const int BUZZER       = 11;
+// ---------- pinos ----------
+// Rua A
+const int A_VERDE    = 8;
+const int A_AMARELO  = 9;
+const int A_VERMELHO = 10;
+// Rua B
+const int B_VERDE    = 11;
+const int B_AMARELO  = 12;
+const int B_VERMELHO = 13;
+// Sensores de presença de carro (um por rua)
+const int SENSOR_A = 2;
+const int SENSOR_B = 3;
 
-// tempos (em milissegundos)
-const unsigned long TEMPO_VERDE_MIN = 5000;  // verde dura pelo menos 5 s
-const unsigned long TEMPO_AMARELO   = 2000;
-const unsigned long TEMPO_VERMELHO  = 6000;
+// ---------- tempos (em milissegundos) ----------
+const unsigned long TEMPO_VERDE_MIN        = 3000;   // verde dura no mínimo 3 s
+const unsigned long TEMPO_VERDE_MAX        = 10000;  // se as duas ruas têm carro, alterna após 10 s
+const unsigned long TEMPO_AMARELO          = 2000;
+const unsigned long TEMPO_TODOS_VERMELHOS  = 1000;   // folga de segurança entre as trocas
 
-enum Estado { VERDE, AMARELO, VERMELHO };
-Estado estado = VERDE;
+// ---------- estados ----------
+enum Estado {
+  VERDE_A,
+  AMARELO_A,
+  TODOS_VERMELHOS_PARA_B,
+  VERDE_B,
+  AMARELO_B,
+  TODOS_VERMELHOS_PARA_A
+};
+
+Estado estado = VERDE_A;
 unsigned long inicioEstado = 0;
-bool pedestreEsperando = false;
+
+// declarações das funções (usadas antes de serem definidas)
+bool temCarro(int sensor);
+void setLuzes(bool av, bool aa, bool ar, bool bv, bool ba, bool br);
+void mudaEstado(Estado novo);
 
 void setup() {
-  pinMode(LED_VERDE, OUTPUT);
-  pinMode(LED_AMARELO, OUTPUT);
-  pinMode(LED_VERMELHO, OUTPUT);
-  pinMode(BUZZER, OUTPUT);
-  pinMode(BOTAO, INPUT_PULLUP);
+  pinMode(A_VERDE, OUTPUT);
+  pinMode(A_AMARELO, OUTPUT);
+  pinMode(A_VERMELHO, OUTPUT);
+  pinMode(B_VERDE, OUTPUT);
+  pinMode(B_AMARELO, OUTPUT);
+  pinMode(B_VERMELHO, OUTPUT);
 
-  mudaEstado(VERDE);
+  pinMode(SENSOR_A, INPUT_PULLUP);
+  pinMode(SENSOR_B, INPUT_PULLUP);
+
+  Serial.begin(9600);
+  mudaEstado(VERDE_A);
 }
 
 void loop() {
-  unsigned long agora = millis();
-
-  // botão apertado = pedestre quer atravessar
-  if (digitalRead(BOTAO) == LOW) {
-    pedestreEsperando = true;
-  }
+  unsigned long tempo = millis() - inicioEstado;
 
   switch (estado) {
-    case VERDE:
-      if (pedestreEsperando && agora - inicioEstado >= TEMPO_VERDE_MIN) {
-        mudaEstado(AMARELO);
+    case VERDE_A:
+      // só troca se tem carro esperando na rua B E (a rua A esvaziou OU o tempo máximo acabou)
+      if (tempo >= TEMPO_VERDE_MIN && temCarro(SENSOR_B) &&
+          (!temCarro(SENSOR_A) || tempo >= TEMPO_VERDE_MAX)) {
+        mudaEstado(AMARELO_A);
       }
       break;
 
-    case AMARELO:
-      if (agora - inicioEstado >= TEMPO_AMARELO) {
-        mudaEstado(VERMELHO);
+    case AMARELO_A:
+      if (tempo >= TEMPO_AMARELO) mudaEstado(TODOS_VERMELHOS_PARA_B);
+      break;
+
+    case TODOS_VERMELHOS_PARA_B:
+      if (tempo >= TEMPO_TODOS_VERMELHOS) mudaEstado(VERDE_B);
+      break;
+
+    case VERDE_B:
+      if (tempo >= TEMPO_VERDE_MIN && temCarro(SENSOR_A) &&
+          (!temCarro(SENSOR_B) || tempo >= TEMPO_VERDE_MAX)) {
+        mudaEstado(AMARELO_B);
       }
       break;
 
-    case VERMELHO:
-      bipaTravessia(agora);
-      if (agora - inicioEstado >= TEMPO_VERMELHO) {
-        pedestreEsperando = false;
-        mudaEstado(VERDE);
-      }
+    case AMARELO_B:
+      if (tempo >= TEMPO_AMARELO) mudaEstado(TODOS_VERMELHOS_PARA_A);
+      break;
+
+    case TODOS_VERMELHOS_PARA_A:
+      if (tempo >= TEMPO_TODOS_VERMELHOS) mudaEstado(VERDE_A);
       break;
   }
 }
 
-// troca de estado e atualiza os LEDs
+// Sensor ligado ao GND quando há carro (INPUT_PULLUP: LOW = carro presente)
+bool temCarro(int sensor) {
+  return digitalRead(sensor) == LOW;
+}
+
+void setLuzes(bool av, bool aa, bool ar, bool bv, bool ba, bool br) {
+  digitalWrite(A_VERDE, av);
+  digitalWrite(A_AMARELO, aa);
+  digitalWrite(A_VERMELHO, ar);
+  digitalWrite(B_VERDE, bv);
+  digitalWrite(B_AMARELO, ba);
+  digitalWrite(B_VERMELHO, br);
+}
+
 void mudaEstado(Estado novo) {
   estado = novo;
   inicioEstado = millis();
 
-  digitalWrite(LED_VERDE,    novo == VERDE    ? HIGH : LOW);
-  digitalWrite(LED_AMARELO,  novo == AMARELO  ? HIGH : LOW);
-  digitalWrite(LED_VERMELHO, novo == VERMELHO ? HIGH : LOW);
-  noTone(BUZZER);
-}
-
-// bip intermitente enquanto o pedestre atravessa
-void bipaTravessia(unsigned long agora) {
-  if ((agora - inicioEstado) % 500 < 250) {
-    tone(BUZZER, 1000);
-  } else {
-    noTone(BUZZER);
+  switch (novo) {
+    case VERDE_A:
+      setLuzes(1, 0, 0,  0, 0, 1);
+      Serial.println("Rua A: VERDE    | Rua B: VERMELHO");
+      break;
+    case AMARELO_A:
+      setLuzes(0, 1, 0,  0, 0, 1);
+      Serial.println("Rua A: AMARELO  | Rua B: VERMELHO");
+      break;
+    case TODOS_VERMELHOS_PARA_B:
+      setLuzes(0, 0, 1,  0, 0, 1);
+      Serial.println("Rua A: VERMELHO | Rua B: VERMELHO");
+      break;
+    case VERDE_B:
+      setLuzes(0, 0, 1,  1, 0, 0);
+      Serial.println("Rua A: VERMELHO | Rua B: VERDE");
+      break;
+    case AMARELO_B:
+      setLuzes(0, 0, 1,  0, 1, 0);
+      Serial.println("Rua A: VERMELHO | Rua B: AMARELO");
+      break;
+    case TODOS_VERMELHOS_PARA_A:
+      setLuzes(0, 0, 1,  0, 0, 1);
+      Serial.println("Rua A: VERMELHO | Rua B: VERMELHO");
+      break;
   }
 }

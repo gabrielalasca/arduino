@@ -5,35 +5,55 @@
   "parts": [
     { "type": "wokwi-arduino-uno", "id": "uno", "top": 0, "left": 0, "attrs": {} },
 
-    { "type": "wokwi-led", "id": "led_verde", "top": -150, "left": 120, "attrs": { "color": "limegreen" } },
-    { "type": "wokwi-led", "id": "led_amarelo", "top": -150, "left": 170, "attrs": { "color": "yellow" } },
-    { "type": "wokwi-led", "id": "led_vermelho", "top": -150, "left": 220, "attrs": { "color": "red" } },
+    { "type": "wokwi-led", "id": "a_verde", "top": -170, "left": 20, "attrs": { "color": "limegreen", "label": "A verde" } },
+    { "type": "wokwi-led", "id": "a_amarelo", "top": -170, "left": 65, "attrs": { "color": "yellow", "label": "A amarelo" } },
+    { "type": "wokwi-led", "id": "a_vermelho", "top": -170, "left": 110, "attrs": { "color": "red", "label": "A vermelho" } },
 
-    { "type": "wokwi-resistor", "id": "r_verde", "top": -80, "left": 95, "rotate": 90, "attrs": { "value": "220" } },
-    { "type": "wokwi-resistor", "id": "r_amarelo", "top": -80, "left": 145, "rotate": 90, "attrs": { "value": "220" } },
-    { "type": "wokwi-resistor", "id": "r_vermelho", "top": -80, "left": 195, "rotate": 90, "attrs": { "value": "220" } },
+    { "type": "wokwi-led", "id": "b_verde", "top": -170, "left": 200, "attrs": { "color": "limegreen", "label": "B verde" } },
+    { "type": "wokwi-led", "id": "b_amarelo", "top": -170, "left": 245, "attrs": { "color": "yellow", "label": "B amarelo" } },
+    { "type": "wokwi-led", "id": "b_vermelho", "top": -170, "left": 290, "attrs": { "color": "red", "label": "B vermelho" } },
 
-    { "type": "wokwi-pushbutton", "id": "botao", "top": -130, "left": 300, "attrs": { "color": "blue" } },
-    { "type": "wokwi-buzzer", "id": "buzzer", "top": -150, "left": 380, "attrs": { "volume": "0.1" } }
+    { "type": "wokwi-resistor", "id": "ra_verde", "top": -95, "left": -5, "rotate": 90, "attrs": { "value": "220" } },
+    { "type": "wokwi-resistor", "id": "ra_amarelo", "top": -95, "left": 40, "rotate": 90, "attrs": { "value": "220" } },
+    { "type": "wokwi-resistor", "id": "ra_vermelho", "top": -95, "left": 85, "rotate": 90, "attrs": { "value": "220" } },
+
+    { "type": "wokwi-resistor", "id": "rb_verde", "top": -95, "left": 175, "rotate": 90, "attrs": { "value": "220" } },
+    { "type": "wokwi-resistor", "id": "rb_amarelo", "top": -95, "left": 220, "rotate": 90, "attrs": { "value": "220" } },
+    { "type": "wokwi-resistor", "id": "rb_vermelho", "top": -95, "left": 265, "rotate": 90, "attrs": { "value": "220" } },
+
+    { "type": "wokwi-slide-switch", "id": "sensor_a", "top": -110, "left": 380, "attrs": {} },
+    { "type": "wokwi-slide-switch", "id": "sensor_b", "top": -110, "left": 450, "attrs": {} }
   ],
   "connections": [
-    [ "uno:8", "r_verde:1", "green", [] ],
-    [ "r_verde:2", "led_verde:A", "green", [] ],
-    [ "led_verde:C", "uno:GND.1", "black", [] ],
+    [ "uno:8", "ra_verde:1", "green", [] ],
+    [ "ra_verde:2", "a_verde:A", "green", [] ],
+    [ "a_verde:C", "uno:GND.1", "black", [] ],
 
-    [ "uno:9", "r_amarelo:1", "gold", [] ],
-    [ "r_amarelo:2", "led_amarelo:A", "gold", [] ],
-    [ "led_amarelo:C", "uno:GND.1", "black", [] ],
+    [ "uno:9", "ra_amarelo:1", "gold", [] ],
+    [ "ra_amarelo:2", "a_amarelo:A", "gold", [] ],
+    [ "a_amarelo:C", "uno:GND.1", "black", [] ],
 
-    [ "uno:10", "r_vermelho:1", "red", [] ],
-    [ "r_vermelho:2", "led_vermelho:A", "red", [] ],
-    [ "led_vermelho:C", "uno:GND.1", "black", [] ],
+    [ "uno:10", "ra_vermelho:1", "red", [] ],
+    [ "ra_vermelho:2", "a_vermelho:A", "red", [] ],
+    [ "a_vermelho:C", "uno:GND.1", "black", [] ],
 
-    [ "uno:2", "botao:1.l", "blue", [] ],
-    [ "botao:2.l", "uno:GND.1", "black", [] ],
+    [ "uno:11", "rb_verde:1", "green", [] ],
+    [ "rb_verde:2", "b_verde:A", "green", [] ],
+    [ "b_verde:C", "uno:GND.1", "black", [] ],
 
-    [ "uno:11", "buzzer:2", "purple", [] ],
-    [ "buzzer:1", "uno:GND.1", "black", [] ]
+    [ "uno:12", "rb_amarelo:1", "gold", [] ],
+    [ "rb_amarelo:2", "b_amarelo:A", "gold", [] ],
+    [ "b_amarelo:C", "uno:GND.1", "black", [] ],
+
+    [ "uno:13", "rb_vermelho:1", "red", [] ],
+    [ "rb_vermelho:2", "b_vermelho:A", "red", [] ],
+    [ "b_vermelho:C", "uno:GND.1", "black", [] ],
+
+    [ "uno:2", "sensor_a:2", "blue", [] ],
+    [ "sensor_a:3", "uno:GND.1", "black", [] ],
+
+    [ "uno:3", "sensor_b:2", "purple", [] ],
+    [ "sensor_b:3", "uno:GND.1", "black", [] ]
   ],
   "dependencies": {}
 }
